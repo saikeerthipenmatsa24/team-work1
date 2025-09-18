@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI Resume Shortlist</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f5f7fa; padding: 30px; }
+    h2 { color: #2c3e50; }
+    label { display: block; margin-top: 15px; }
+    textarea { width: 100%; height: 150px; margin-top: 5px; }
+    input[type="file"] { margin-top: 10px; }
+    button {
+      background-color: #3498db; color: white; border: none;
+      padding: 10px 20px; cursor: pointer; margin-top: 20px;
+    }
+    #result { margin-top: 30px; }
+    .resume-score {
+      background: #ecf0f1; padding: 10px; border-radius: 5px;
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>AI Resume Shortlisting Tool</h2>
+
+  <form id="resumeForm">
+    <label for="jobDesc">Job Description:</label>
+    <textarea id="jobDesc" name="job_description" required></textarea>
+
+    <label for="resumes">Upload Resumes (PDFs):</label>
+    <input type="file" id="resumes" name="resumes" accept=".pdf" multiple required />
+
+    <button type="submit">Shortlist Candidates</button>
+  </form>
+
+  <div id="result"></div>
+
+  <script>
+    const form = document.getElementById('resumeForm');
+    const resultDiv = document.getElementById('result');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const formData = new FormData();
+      const jobDesc = document.getElementById('jobDesc').value;
+      const resumes = document.getElementById('resumes').files;
+
+      formData.append('job_description', jobDesc);
+      for (let i = 0; i < resumes.length; i++) {
+        formData.append('resumes', resumes[i]);
+      }
+
+      resultDiv.innerHTML = 'Processing...';
+
+      try {
+        const response = await fetch('/shortlist', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await response.json();
+        resultDiv.innerHTML = '<h3>Top Matching Resumes:</h3>';
+
+        data.matches.forEach((res, index) => {
+          resultDiv.innerHTML += `
+            <div class="resume-score">
+              <strong>${index + 1}. ${res.filename}</strong><br/>
+              Match Score: ${res.score.toFixed(4)}
+            </div>
+          `;
+        });
+      } catch (error) {
+        resultDiv.innerHTML = '<p style="color:red;">Error processing resumes.</p>';
+        console.error(error);
+      }
+    });
+  </script>
+
+</body>
+</html>
